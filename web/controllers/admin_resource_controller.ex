@@ -334,7 +334,7 @@ defmodule ExAdmin.AdminResourceController do
           true ->
             dt_offset
             |> Timex.add(Timex.Duration.from_days(1))
-            |> Timex.subtract(Timex.Duration.from_milliseconds(1))
+            |> Timex.subtract(Timex.Duration.from_microseconds(1))
 
           false ->
             dt_offset
