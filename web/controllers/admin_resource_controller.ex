@@ -10,7 +10,10 @@ defmodule ExAdmin.AdminResourceController do
 
     page = case conn.assigns[:page] do
       nil ->
-        id = params |> Map.to_list
+        id =
+          conn
+          |> convert_dates(params)
+          |> Map.to_list
         query = model.run_query(repo(), defn, :index, id)
         Authorization.authorize_query(conn.assigns.resource, conn, query, :index, id)
         |> ExAdmin.Query.execute_query(repo(), :index, id)
@@ -259,6 +262,72 @@ defmodule ExAdmin.AdminResourceController do
     else
       content_type = content_type <> "; charset=utf-8"
       %{conn | resp_headers: [{"content-type", content_type}|resp_headers]}
+    end
+  end
+
+  defp convert_dates(conn, %{q: query_map} = params) do
+    case conn.assigns[:tz] do
+      nil ->
+        params
+
+      "" ->
+        params
+
+      tz ->
+        params
+        |> Map.put(
+          :q,
+          conn.assigns.resource
+          |> convert_dates_to_tz(query_map, tz)
+        )
+    end
+  end
+  defp convert_dates(_conn, params), do: params
+
+  defp convert_dates_to_tz(resource, %{} = query_map, tz) do
+    query_map
+    |> Enum.reduce(%{}, fn {k, v}, acc ->
+      case String.match?(v, ~r/\d{4}-\d{2}-\d{2}/) do
+        true ->
+          acc
+          |> Map.put(
+            k,
+            resource |> date_to_datetime_in_tz(k, v, tz)
+          )
+
+        false ->
+          acc
+      end
+    end)
+  end
+
+  defp date_to_datetime_in_tz(resource, equality, date, tz) do
+    field =
+      to_string(equality)
+      |> String.replace("_lt", "")
+      |> String.replace("_gte", "")
+      |> to_atom()
+
+    case resource.__struct__.__schema__(:type, field) do
+      :date ->
+        date
+
+      :naive_datetime ->
+        [year, month, day] =
+          date
+          |> String.split("-")
+          |> Enum.map(&String.to_integer/1)
+
+        offset =
+          Timex.Timezone.get(tz).offset_utc / 60.0 / 60.0
+
+        dt =
+          {year, month, day}
+          |> Date.from_erl!
+          |> Timex.beginning_of_day
+          |> Timex.to_naive_datetime()
+
+        Timex.add(dt, Timex.Duration.from_hours(offset * -1))
     end
   end
 end
