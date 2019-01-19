@@ -50,12 +50,12 @@ defmodule ExAdmin.Theme.ActiveAdmin.Filter do
   def build_field({name, type}, q, defn) when type in [Ecto.DateTime, Ecto.Date, Ecto.Time, Timex.Ecto.DateTime, Timex.Ecto.Date, Timex.Ecto.Time, Timex.Ecto.DateTimeWithTimezone, NaiveDateTime, :naive_datetime, DateTime, :utx_datetime] do
     name_label = field_label(name, defn)
     gte_value = get_value("#{name}_gte", q)
-    lte_value = get_value("#{name}_lt", q)
+    lte_value = get_value("#{name}_lte", q)
     div ".filter_form_field.filter_date_range" do
       label ".label #{name_label}", for: "q_#{name}_gte"
       input class: "datepicker", id: "q_#{name}_gte", max: "10", name: "q[#{name}_gte]", size: "12", type: :text, value: gte_value
       span ".seperator -"
-      input class: "datepicker", id: "q_#{name}_lt", max: "10", name: "q[#{name}_lt]", size: "12", type: :text, value: lte_value
+      input class: "datepicker", id: "q_#{name}_lte", max: "10", name: "q[#{name}_lte]", size: "12", type: :text, value: lte_value
     end
   end
 

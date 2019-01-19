@@ -304,7 +304,7 @@ defmodule ExAdmin.AdminResourceController do
   defp date_to_datetime_in_tz(resource, equality, date, tz) do
     field =
       to_string(equality)
-      |> String.replace("_lt", "")
+      |> String.replace("_lte", "")
       |> String.replace("_gte", "")
       |> to_atom()
 
@@ -327,7 +327,18 @@ defmodule ExAdmin.AdminResourceController do
           |> Timex.beginning_of_day
           |> Timex.to_naive_datetime()
 
-        Timex.add(dt, Timex.Duration.from_hours(offset * -1))
+        dt_offset =
+          Timex.add(dt, Timex.Duration.from_hours(offset * -1))
+
+        case String.match?(to_string(equality), ~r/_lte$/) do
+          true ->
+            dt_offset
+            |> Timex.add(Timex.Duration.from_days(1))
+            |> Timex.subtract(Timex.Duration.from_milliseconds(1))
+
+          false ->
+            dt_offset
+        end
     end
   end
 end
