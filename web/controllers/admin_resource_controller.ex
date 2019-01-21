@@ -286,19 +286,22 @@ defmodule ExAdmin.AdminResourceController do
 
   defp convert_dates_to_tz(resource, %{} = query_map, tz) do
     query_map
-    |> Enum.reduce(%{}, fn {k, v}, acc ->
-      case String.match?(v, ~r/\d{4}-\d{2}-\d{2}/) do
-        true ->
-          acc
-          |> Map.put(
-            k,
-            resource |> date_to_datetime_in_tz(k, v, tz)
-          )
+    |> Map.merge(
+      query_map
+      |> Enum.reduce(%{}, fn {k, v}, acc ->
+        case String.match?(v, ~r/\d{4}-\d{2}-\d{2}/) do
+          true ->
+            acc
+            |> Map.put(
+              k,
+              resource |> date_to_datetime_in_tz(k, v, tz)
+            )
 
-        false ->
-          acc
-      end
-    end)
+          false ->
+            acc
+        end
+      end)
+    )
   end
 
   defp date_to_datetime_in_tz(resource, equality, date, tz) do
